@@ -1,22 +1,26 @@
-import json
+from scrapy.utils.serialize import ScrapyJSONEncoder
 from kafka import KafkaProducer
-from itemadapter import ItemAdapter
 
 
-class KafkaWriterPipeline:
+class KafkaWriterPipeline(object):
+    def __init__(self, producer, topic):
+        self.producer = producer
+        self.topic = topic
+        self.encoder = ScrapyJSONEncoder()
 
-    topic_name = "quotes"
-
-    def open_spider(self, spider):
-        self.producer = KafkaProducer(
-            bootstrap_servers=["localhost:9092"],
-            value_serializer=lambda x: json.dumps(x).encode("utf-8"),
-        )
+    def process_item(self, item, spider):
+        msg = self.encoder.encode(item).encode("utf-8")
+        self.producer.send(self.topic, msg)
 
     def close_spider(self, spider):
         self.producer.close()
 
-    def process_item(self, item, spider):
-        adapter = ItemAdapter(item)
-        row = adapter.asdict()
-        self.producer.send(self.topic_name, value=row)
+    @classmethod
+    def from_crawler(cls, crawler):
+        settings = crawler.settings
+        hosts = settings.get("SCRAPY_KAFKA_HOSTS")
+        topic = settings.get("SCRAPY_KAFKA_WRITE_TOPIC")
+        conn = KafkaProducer(
+            bootstrap_servers=hosts,
+        )
+        return cls(conn, topic)

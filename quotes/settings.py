@@ -86,3 +86,7 @@ ITEM_PIPELINES = {
 # HTTPCACHE_DIR = 'httpcache'
 # HTTPCACHE_IGNORE_HTTP_CODES = []
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+# scrapy-kafka settings
+SCRAPY_KAFKA_HOSTS = ["localhost:9092"]
+SCRAPY_KAFKA_WRITE_TOPIC = "quotes"
